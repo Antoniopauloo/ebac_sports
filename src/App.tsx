@@ -1,8 +1,14 @@
-import { useEffect, useState } from 'react'
+import { Provider } from 'react-redux'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 import Header from './components/Header'
 import Produtos from './containers/Produtos'
-
+import { store } from './store'
 import { GlobalStyle } from './styles'
+import { useGetProdutosQuery } from './services/api'
+import { useAppDispatch, useAppSelector } from './store/hooks'
+import { adicionar } from './store/reducers/carrinhoSlice'
+import { toggleFavorito } from './store/reducers/favoritosSlice'
 
 export type Produto = {
   id: number
@@ -11,47 +17,47 @@ export type Produto = {
   imagem: string
 }
 
-function App() {
-  const [produtos, setProdutos] = useState<Produto[]>([])
-  const [carrinho, setCarrinho] = useState<Produto[]>([])
-  const [favoritos, setFavoritos] = useState<Produto[]>([])
+const AppContent = () => {
+  const { data: produtos = [] } = useGetProdutosQuery()
+  const { itens: favoritos } = useAppSelector((state) => state.favoritos)
+  const dispatch = useAppDispatch()
 
-  useEffect(() => {
-    fetch('https://fake-api-tau.vercel.app/api/ebac_sports')
-      .then((res) => res.json())
-      .then((res) => setProdutos(res))
-  }, [])
-
-  function adicionarAoCarrinho(produto: Produto) {
-    if (carrinho.find((p) => p.id === produto.id)) {
-      alert('Item já adicionado')
-    } else {
-      setCarrinho([...carrinho, produto])
-    }
+  const handleAdicionarAoCarrinho = (produto: Produto) => {
+    dispatch(adicionar(produto))
   }
 
-  function favoritar(produto: Produto) {
-    if (favoritos.find((p) => p.id === produto.id)) {
-      const favoritosSemProduto = favoritos.filter((p) => p.id !== produto.id)
-      setFavoritos(favoritosSemProduto)
-    } else {
-      setFavoritos([...favoritos, produto])
-    }
+  const handleFavoritar = (produto: Produto) => {
+    dispatch(toggleFavorito(produto))
   }
 
   return (
-    <>
+    <div className="container">
+      <Header />
+      <Produtos
+        produtos={produtos}
+        favoritos={favoritos}
+        adicionarAoCarrinho={handleAdicionarAoCarrinho}
+        favoritar={handleFavoritar}
+      />
+    </div>
+  )
+}
+
+function App() {
+  return (
+    <Provider store={store}>
       <GlobalStyle />
-      <div className="container">
-        <Header favoritos={favoritos} itensNoCarrinho={carrinho} />
-        <Produtos
-          produtos={produtos}
-          favoritos={favoritos}
-          favoritar={favoritar}
-          adicionarAoCarrinho={adicionarAoCarrinho}
-        />
-      </div>
-    </>
+      <AppContent />
+      <ToastContainer
+        position="bottom-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+        draggable={false}
+        limit={3}
+      />
+    </Provider>
   )
 }
 

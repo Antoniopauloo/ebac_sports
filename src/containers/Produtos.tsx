@@ -1,9 +1,9 @@
 import { Produto as ProdutoType } from '../App'
 import Produto from '../components/Produto'
-
 import * as S from './styles'
+import { useAppSelector } from '../store/hooks'
 
-type Props = {
+type ProdutosProps = {
   produtos: ProdutoType[]
   favoritos: ProdutoType[]
   adicionarAoCarrinho: (produto: ProdutoType) => void
@@ -12,31 +12,23 @@ type Props = {
 
 const ProdutosComponent = ({
   produtos,
-  favoritos,
   adicionarAoCarrinho,
   favoritar
-}: Props) => {
-  const produtoEstaNosFavoritos = (produto: ProdutoType) => {
-    const produtoId = produto.id
-    const IdsDosFavoritos = favoritos.map((f) => f.id)
-
-    return IdsDosFavoritos.includes(produtoId)
-  }
+}: ProdutosProps) => {
+  const { itens: favoritosRedux } = useAppSelector((state) => state.favoritos)
 
   return (
-    <>
-      <S.Produtos>
-        {produtos.map((produto) => (
-          <Produto
-            estaNosFavoritos={produtoEstaNosFavoritos(produto)}
-            key={produto.id}
-            produto={produto}
-            favoritar={favoritar}
-            aoComprar={adicionarAoCarrinho}
-          />
-        ))}
-      </S.Produtos>
-    </>
+    <S.Produtos>
+      {produtos.map((produto) => (
+        <Produto
+          key={produto.id}
+          produto={produto}
+          estaNosFavoritos={favoritosRedux.some((f) => f.id === produto.id)}
+          aoComprar={adicionarAoCarrinho}
+          favoritar={favoritar}
+        />
+      ))}
+    </S.Produtos>
   )
 }
 
